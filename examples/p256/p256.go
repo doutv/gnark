@@ -171,22 +171,22 @@ func Groth16Prove(fileDir string) {
 	ReadFromFile(vk, fileDir+circuitName+".vkey")
 
 	// CPU
-	for i := 0; i < 1; i++ {
-		fmt.Printf("------ CPU Prove %d ------", i+1)
-		start = time.Now()
-		proof, err := groth16.Prove(r1cs, pk, witnessData, solidity.WithProverTargetSolidityVerifier(backend.GROTH16))
-		if err != nil {
-			panic(err)
-		}
-		elapsed = time.Since(start)
-		log.Printf("CPU Prove: %d ms", elapsed.Milliseconds())
-		if err := groth16.Verify(proof, vk, publicWitness, solidity.WithVerifierTargetSolidityVerifier(backend.GROTH16)); err != nil {
-			panic(err)
-		}
-	}
+	// for i := 0; i < 1; i++ {
+	// 	fmt.Printf("------ CPU Prove %d ------", i+1)
+	// 	start = time.Now()
+	// 	proof, err := groth16.Prove(r1cs, pk, witnessData, solidity.WithProverTargetSolidityVerifier(backend.GROTH16))
+	// 	if err != nil {
+	// 		panic(err)
+	// 	}
+	// 	elapsed = time.Since(start)
+	// 	log.Printf("CPU Prove: %d ms", elapsed.Milliseconds())
+	// 	if err := groth16.Verify(proof, vk, publicWitness, solidity.WithVerifierTargetSolidityVerifier(backend.GROTH16)); err != nil {
+	// 		panic(err)
+	// 	}
+	// }
 
 	// GPU
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 1; i++ {
 		fmt.Printf("------ GPU Prove %d ------\n", i+1)
 		start = time.Now()
 		proof, err := groth16.Prove(r1cs, pk, witnessData, solidity.WithProverTargetSolidityVerifier(backend.GROTH16), backend.WithZeknoxAcceleration())

@@ -4,8 +4,10 @@ package zeknox_bn254
 
 import (
 	"context"
+	"encoding/binary"
 	"fmt"
 	"math/big"
+	"os"
 	"runtime"
 	"time"
 	"unsafe"
@@ -226,7 +228,7 @@ func Prove(r1cs *cs.R1CS, pk *ProvingKey, fullWitness witness.Witness, opts ...b
 	var bs1, ar curve.G1Jac
 
 	computeBS1 := func() error {
-		<- chWireValuesB
+		<-chWireValuesB
 		var wireB *device.HostOrDeviceSlice[fr.Element]
 		chWireB := make(chan *device.HostOrDeviceSlice[fr.Element], 1)
 		if err := CopyToDevice(wireValuesB, chWireB); err != nil {
@@ -234,6 +236,8 @@ func Prove(r1cs *cs.R1CS, pk *ProvingKey, fullWitness witness.Witness, opts ...b
 		}
 		wireB = <-chWireB
 		defer wireB.Free()
+		writeScalarToFile(wireValuesB, "bs-scalar.bin")
+		writePointToFile(pk.G1.B, "bs-point.bin")
 		startBs1 := time.Now()
 		if err := msmG1(&bs1, pk.G1Device.B, wireB); err != nil {
 			return err
@@ -246,7 +250,7 @@ func Prove(r1cs *cs.R1CS, pk *ProvingKey, fullWitness witness.Witness, opts ...b
 	}
 
 	computeAR1 := func() error {
-		<- chWireValuesA
+		<-chWireValuesA
 		var wireA *device.HostOrDeviceSlice[fr.Element]
 		chWireA := make(chan *device.HostOrDeviceSlice[fr.Element], 1)
 		if err := CopyToDevice(wireValuesA, chWireA); err != nil {
@@ -286,6 +290,8 @@ func Prove(r1cs *cs.R1CS, pk *ProvingKey, fullWitness witness.Witness, opts ...b
 		}
 		deviceH = <-chDeviceH
 		defer deviceH.Free()
+		writeScalarToFile(h[:sizeH], "h-scalar.bin")
+		writePointToFile(pk.G1.Z, "h-point.bin")
 		// MSM G1 Krs2
 		startKrs2 := time.Now()
 		if err := msmG1(&krs2, pk.G1Device.Z, deviceH); err != nil {
@@ -506,4 +512,32 @@ func CopyToDevice[T any](hostData []T, chDeviceSlice chan *device.HostOrDeviceSl
 	}
 	chDeviceSlice <- deviceSlice
 	return nil
+}
+
+func writeScalarToFile(data []fr.Element, filename string) {
+	file, err := os.Create(filename)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+	for _, element := range data {
+		err = binary.Write(file, binary.LittleEndian, element)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
+func writePointToFile(data []curve.G1Affine, filename string) {
+	file, err := os.Create(filename)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+	for _, element := range data {
+		err = binary.Write(file, binary.LittleEndian, element)
+		if err != nil {
+			panic(err)
+		}
+	}
 }
