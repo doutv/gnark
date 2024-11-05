@@ -323,12 +323,12 @@ func Prove(r1cs *cs.R1CS, pk *ProvingKey, fullWitness witness.Witness, opts ...b
 	<-chHDone
 
 	// schedule our proof part computations
-	go computeKRS()
-	go computeAR1()
-	go computeBS1()
+	computeAR1()
+	computeBS1()
 	if err := computeBS2(); err != nil {
 		return nil, err
 	}
+	computeKRS()
 
 	// wait for all parts of the proof to be computed.
 	if err := <-chKrsDone; err != nil {
